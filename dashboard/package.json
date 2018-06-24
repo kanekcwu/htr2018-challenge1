@@ -5,9 +5,11 @@
   "dependencies": {
     "bootstrap": "^4.1.1",
     "chart.js": "^1.1.1",
+    "currency-formatter": "^1.4.2",
     "react": "^16.4.1",
     "react-chartjs": "^1.2.0",
     "react-dom": "^16.4.1",
+    "react-icons-kit": "^1.1.5",
     "react-scripts": "1.1.4",
     "reactstrap": "^6.1.0",
     "theme-machine": "git@github.com:HackerThemes/theme-machine.git#master"

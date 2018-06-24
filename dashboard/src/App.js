@@ -1,7 +1,11 @@
 import React, { Component } from 'react';
 import './App.css';
 
-import { Button, Nav, Table, NavLink, NavItem } from 'reactstrap';
+import {
+  Button, ButtonToolbar, Table,
+  Nav, NavLink, NavItem,
+  UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem,
+} from 'reactstrap';
 
 import Overview from './pages/Overview';
 import Promotions from './pages/Promotions';
@@ -27,7 +31,20 @@ class App extends Component {
     return (
       <div className="App">
         <Nav horizontal className="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-          <a className="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Challenge 1</a>
+          <a className="navbar-brand col-sm-3 col-md-2 mr-0" href="#">D</a>
+          <ul class="navbar-nav px-3">
+            <li class="nav-item text-nowrap">
+              <ButtonToolbar>
+                <UncontrolledDropdown disabled size="sm" color="primary">
+                  <DropdownToggle caret>Apr 2018</DropdownToggle>
+                  <DropdownMenu right>
+                    <DropdownItem header>Month</DropdownItem>
+                    <DropdownItem>Apr 2018</DropdownItem>
+                  </DropdownMenu>
+                </UncontrolledDropdown>
+              </ButtonToolbar>
+            </li>
+          </ul>
         </Nav>
 
         <div className="container-fluid">

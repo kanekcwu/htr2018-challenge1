@@ -1,20 +1,61 @@
 import React from 'react';
 
-import { Table } from 'reactstrap';
+import {
+  Table,
+  Button, ButtonToolbar, ButtonGroup,
+  Dropdown, DropdownToggle, DropdownMenu, DropdownItem,
+} from 'reactstrap';
+import currencyFormatter from 'currency-formatter';
+
+import { Icon } from 'react-icons-kit';
+import {
+  ic_remove_circle_outline as removeCircle,
+  ic_keyboard_arrow_up as arrowUp,
+  ic_keyboard_arrow_down as arrowDown,
+} from 'react-icons-kit/md';
 
 export default class Promotions extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
+      columns: [
+        'Item',
+        'Category',
+        'Promotion Type',
+        'Promotion Description',
+        'Start Date',
+        'End Date',
+        'Duration',
+        'Quantity',
+        'Total Sales',
+        'Average Daily Profit Change',
+      ],
       limit: 20,
-      sortBy: 'Prom Start',
+      sortBy: 'Category',
       sortAscending: true,
     };
   }
 
   componentDidMount() {
-    this.fetchData();
+    setTimeout(() => {
+      fetch(`${process.env.REACT_APP_DRILLER_API_ENDPOINT_PREFIX}promotions/filters`)
+      .then(response => response.json())
+      .then((data) => {
+        this.setState({
+          filters: data.filters,
+          activeFilters: Object.keys(data.filters).reduce((memo, item) => ({
+            ...memo,
+            [item]: null,
+          }), {}),
+          isFilterOpen: Object.keys(data.filters).reduce((memo, item) => ({
+            ...memo,
+            [item]: false,
+          }), {}),
+        });
+      });
+    }, 0);
+    this.fetchTableData();
   }
 
   toggleSort(sortBy) {
@@ -27,14 +68,44 @@ export default class Promotions extends React.Component {
         sortBy,
       });
     }
-    this.fetchData();
+    this.fetchTableData();
   }
 
-  fetchData() {
-    this.setState({ records: null });
+  toggleFilter(filter) {
+    this.setState({
+      isFilterOpen: {
+        ...this.state.isFilterOpen,
+        [filter]: !this.state.isFilterOpen[filter],
+      },
+    });
+  }
 
+  setFilter(filter, name) {
+    this.setState({
+      activeFilters: {
+        ...this.state.activeFilters,
+        [filter]: name,
+      },
+    });
+    this.fetchTableData();
+  }
+
+  fetchTableData() {
     setTimeout(() => {
-      fetch(`${process.env.REACT_APP_DRILLER_API_ENDPOINT_PREFIX}promotions?limit=${this.state.limit}&sortBy=${this.state.sortBy}&sortAscending=${this.state.sortAscending ? 1 : 0}`)
+      fetch(`${process.env.REACT_APP_DRILLER_API_ENDPOINT_PREFIX}promotions`, {
+        method: 'post',
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          offset: 0,
+          limit: this.state.limit,
+          sortBy: this.state.sortBy,
+          sortAscending: this.state.sortAscending,
+          filters: this.state.activeFilters || {},
+        }),
+      })
       .then(response => response.json())
       .then((data) => {
         this.setState({ records: data.promotions });
@@ -45,60 +116,84 @@ export default class Promotions extends React.Component {
   render() {
     return <div>
       <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 className="h2">Promotions</h1>
-        <div className="btn-toolbar mb-2 mb-md-0">
-          <div className="btn-group mr-2">
-            <button className="btn btn-sm btn-outline-secondary">Import</button>
-          </div>
-          <button disabled className="btn btn-sm btn-outline-secondary dropdown-toggle">
-            Apr 2018
-          </button>
-        </div>
+        <h2>Promotions</h2>
       </div>
-      {
-        this.state.records && (
-          <Table responsive hover size="sm">
-            <thead>
+      <div className="d-flex justify-content-start flex-wrap flex-md-nowrap align-items-left pb-1 mb-2">
+        <h4>Filters</h4>
+        <ButtonToolbar>
+          {
+            this.state.filters && (
+              Object.keys(this.state.filters).map((filter) => (
+                <Dropdown className="px-2" isOpen={this.state.isFilterOpen[filter]} toggle={() => this.toggleFilter(filter)} size="sm" color="primary">
+                  <DropdownToggle caret>{filter}: {this.state.activeFilters[filter] || '[all]'}</DropdownToggle>
+                  <DropdownMenu left>
+                    <DropdownItem header>{filter}</DropdownItem>
+                    {
+                      this.state.activeFilters[filter] && (
+                        <DropdownItem onClick={() => this.setFilter(filter, null)} disabled={!this.state.activeFilters[filter]}>
+                          <Icon icon={removeCircle} /> Remove this filter
+                        </DropdownItem>
+                      )
+                    }
+                    {this.state.filters[filter].map(item => (
+                      <DropdownItem onClick={() => this.setFilter(filter, item)}>{item}</DropdownItem>
+                    ))}
+                  </DropdownMenu>
+                </Dropdown>
+              ))
+            )
+          }
+        </ButtonToolbar>
+      </div>
+      <Table responsive hover>
+        <thead>
+          <tr>
+            {
+              this.state.columns.map(column => (
+                <th onClick={() => this.toggleSort(column)}>
+                  {column}
+                  {
+                    (this.state.sortBy === column) && <Icon icon={this.state.sortAscending ? arrowUp : arrowDown} />
+                  }
+                </th>
+              ))
+            }
+          </tr>
+        </thead>
+        <tbody>
+          {
+            this.state.records && this.state.records.map(record => (
               <tr>
-                <th onClick={() => this.toggleSort('Prod Name (Chi)')}>
-                  Product
-                  {
-                    (this.state.sortBy === 'Prod Name (Chi)') && (this.state.sortAscending ? '\u25b2' : '\u25bc')
-                  }
-                </th>
-                <th onClick={() => this.toggleSort('Prom Start')}>
-                  Start Date
-                  {
-                    (this.state.sortBy === 'Prom Start') && (this.state.sortAscending ? '\u25b2' : '\u25bc')
-                  }
-                </th>
-                <th onClick={() => this.toggleSort('Prom End')}>
-                  End Date
-                  {
-                    (this.state.sortBy === 'Prom End') && (this.state.sortAscending ? '\u25b2' : '\u25bc')
-                  }
-                </th>
+                {
+                  this.state.columns.map((column) => {
+                    if ([
+                      'Total Sales',
+                    ].includes(column)) {
+                      return <td>{currencyFormatter.format(record[column], { code: 'HKD' })}</td>;
+                    }
+
+                    if ([
+                      'Quantity',
+                    ].includes(column)) {
+                      return <td>{currencyFormatter.format(record[column], {
+                        thousands: ',',
+                        precision: 0,
+                      })}</td>;
+                    }
+
+                    return <td>{record[column]}</td>;
+                  })
+                }
               </tr>
-            </thead>
-            <tbody>
-              {
-                this.state.records.map(record => (
-                  <tr>
-                    <td>{record['Prod Name (Chi)']}</td>
-                    <td>{record['Prom Start']}</td>
-                    <td>{record['Prom End']}</td>
-                  </tr>
-                ))
-              }
-            </tbody>
-            <tfoot>
-            </tfoot>
-          </Table>
-        )
-      }
-      {
-        !this.state.records && <div>Loading...</div>
-      }
+            ))
+          }
+          {
+            !this.state.records && <tr><td colspan={this.state.columns.length}>Loading&hellip;</td></tr>
+          }
+        </tbody>
+        <tfoot>
+        </tfoot>
+      </Table>
     </div>;
   }
 }
